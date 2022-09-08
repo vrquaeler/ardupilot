@@ -5,9 +5,6 @@
 
 bool ModeFollow::_enter()
 {
-    plane.throttle_allows_nudging = true;
-    plane.auto_throttle_mode = true;
-    plane.auto_navigation_mode = true;
     follow_sysid = 0;
 
     plane.guided_WP_loc = plane.current_loc;
@@ -25,14 +22,19 @@ void ModeFollow::update()
     if (plane.g2.follow.get_target_location_and_velocity(loc, vel_ned)) {
         plane.guided_WP_loc = loc;
         const uint32_t now = AP_HAL::millis();
-        if (now - last_notify > 1000) {
+        if (now - last_notify > 10000) {
             last_notify = now;
-            gcs().send_text(MAV_SEVERITY_INFO, "%u %u\n", loc.lat, loc.lng);
+//            gcs().send_text(MAV_SEVERITY_INFO, "%u %u %u\n", loc.lat, loc.lng, loc.alt);
         }
         plane.set_guided_WP();
+        plane.adjust_altitude_target();
     }
-
     plane.calc_nav_roll();
     plane.calc_nav_pitch();
     plane.calc_throttle();
+}
+
+void ModeFollow::navigate()
+{
+    plane.update_loiter(0);
 }
