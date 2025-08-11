@@ -293,13 +293,11 @@ local simulate_telemetry_failed = false
 
 AIRSPEED_MIN = Parameter('AIRSPEED_MIN')
 AIRSPEED_MAX = Parameter('AIRSPEED_MAX')
-AIRSPEED_CRUISE = Parameter('AIRSPEED_CRUISE')
 WP_LOITER_RAD = Parameter('WP_LOITER_RAD')
 WINDSPEED_MAX = Parameter('AHRS_WIND_MAX')
 
 local airspeed_max = AIRSPEED_MAX:get()
 local airspeed_min = AIRSPEED_MIN:get()
-local airspeed_cruise = AIRSPEED_CRUISE:get()
 local windspeed_max = WINDSPEED_MAX:get()
 
 local function constrain(v, vmin, vmax)
