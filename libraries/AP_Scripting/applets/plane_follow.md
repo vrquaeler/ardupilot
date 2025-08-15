@@ -18,7 +18,7 @@ and ==must be different== from the MAVLINK_SYSID of the following plane.
 
 The script adds the following parameters to control it's behaviour. It uses 
 the existing FOLL parameters that are used for the Copter FOLLOW mode. In addition
-the following "ZPF" parameters are added: Z = scripting, P = Plane, F = Follow.
+the following "FOLLP_" parameters are added: FOLL = Follow, P = Plane.
 
 ## FOLLP_FAIL_MODE
 
@@ -127,7 +127,7 @@ The target location the plane will attempt to achieve will be offset from the ta
 vehicle location by FOLL_OFS_X and FOLL_OFS_Y. FOLL_OFS_Z will be offset against the 
 target vehicle, but also FOLL_ALT_TYPE will determine the altitude frame that the vehicle
 will use when calculating the target altitude. See the definitions of these
-parameters to understand how they work. ZPF2_ALT_OVR will override the operation of FOLL_OFS_Z
+parameters to understand how they work. FOLLP_ALT_OVR will override the operation of FOLL_OFS_Z
 setting a fixed altitude for the following plane in FOLL_ALT_TYPE frame.
 
 The existing FOLL_YAW_BEHAVE and FOLL_POS_P parameters are ignored by Plane Follow.
