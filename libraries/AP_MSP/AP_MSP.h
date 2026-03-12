@@ -38,12 +38,13 @@
 
 #if AP_MSP_RADAR_ENABLED
 #define RADAR_MAX_PEERS 6
-#define RADAR_PEER_FRESH_TIME_MS 3000
+#define RADAR_PEER_FRESH_TIME_MS 2000
+#define RADAR_PEER_MISSING_TIME_MS 10000
 
 struct MSP_RadarPeer {
     uint32_t last_update_ms;
     Location location;
-    bool is_healthy() const;
+    bool is_healthy(uint32_t fresh_time = RADAR_PEER_MISSING_TIME_MS) const;
 };
 #endif
 

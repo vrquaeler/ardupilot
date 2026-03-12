@@ -1835,22 +1835,20 @@ void AP_OSD_Screen::draw_radar(uint8_t x, uint8_t y)
     const MSP_RadarPeer *peer = msp->get_radar_peer(_radar_peer_id);
 
     Location loc;
-    if (ahrs.get_location(loc) && peer) {
-        const Location &peer_loc = peer->location;
-        float distance = loc.get_distance(peer_loc);
+    if (peer && ahrs.get_location(loc)) {
+        float distance = loc.get_distance(peer->location);
         ftype vertical_distance;
-        if (!peer_loc.get_height_above(loc, vertical_distance)) {
-            vertical_distance = 0.0f;
-        }
-        int32_t angle = wrap_360_cd(loc.get_bearing_to(peer_loc) - ahrs.yaw_sensor);
-        int32_t interval = 36000 / SYMBOL(SYM_ARROW_COUNT);
-        if (distance < 2.0f) {
-            //avoid fast rotating arrow at small distances
-            angle = 0;
-        }
-        char arrow = SYMBOL(SYM_ARROW_START) + ((angle + interval / 2) / interval) % SYMBOL(SYM_ARROW_COUNT);
+        UNUSED_RESULT(peer->location.get_height_above(loc, vertical_distance));
+
+        int32_t angle_cd = (distance < 2.0f) ? 0 : loc.get_bearing_to(peer->location) - ahrs.yaw_sensor;
+
+        char arrow = get_arrow_font_index(angle_cd);
         backend->write(x, y, false, "%c%c", _radar_peer_id + 65, arrow);
         draw_distance(x+2, y, distance);
+        int dt = AP_HAL::millis() - peer->last_update_ms;
+        if (dt > RADAR_PEER_FRESH_TIME_MS) { // getting stale, show time
+            backend->write(x + 7, y + 1, false, "%dS", dt/1000);
+        }
         draw_vdistance(x+1, y+1, vertical_distance);
     } else {
         backend->write(x, y, true, "%c", _radar_peer_id + 65);

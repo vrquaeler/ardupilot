@@ -15,6 +15,8 @@
 
 #include <AP_AHRS/AP_AHRS.h>
 #include <AP_RSSI/AP_RSSI.h>
+#include <AP_Logger/AP_Logger.h>
+#include <GCS_MAVLink/GCS.h>
 
 #include "AP_MSP.h"
 #include "AP_MSP_Telem_Generic.h"
@@ -237,8 +239,27 @@ bool AP_MSP::is_option_enabled(Option option) const
 void AP_MSP::update_radar_data(const MSP::msp_radar_pos_message_t &msg)
 {
     if (msg.radar_no < RADAR_MAX_PEERS) {
-        _radar_data[msg.radar_no].last_update_ms = AP_HAL::millis();
-        _radar_data[msg.radar_no].location = Location(msg.lat, msg.lon, msg.alt, Location::AltFrame::ABSOLUTE);
+        MSP_RadarPeer &peer = _radar_data[msg.radar_no];
+        bool was_present = peer.is_healthy(RADAR_PEER_MISSING_TIME_MS);
+        Location newp(msg.lat, msg.lon, msg.alt, Location::AltFrame::ABSOLUTE);
+        if (!newp.is_zero() && !newp.same_loc_as(peer.location)) {
+            peer.last_update_ms = AP_HAL::millis(); //only update if data is updating
+        }
+        peer.location = newp;
+        bool now_present = peer.is_healthy(RADAR_PEER_MISSING_TIME_MS);
+        // Log the first valid peer data
+        if (msg.radar_no == 0 && now_present) {
+            AP::logger().Write(
+                "MSPR", "TimeUS,Lat,Lon,Alt", "sDUm", "FBBB",
+                AP_HAL::micros64(), msg.lat, msg.lon, msg.alt * 0.01f
+            );
+        }
+        GCS* gcs = GCS::get_singleton();
+        if (!was_present and now_present) {
+            gcs->send_text(MAV_SEVERITY_INFO, "MSP Radar %c detected", msg.radar_no + 'A');
+        } else if (was_present and !now_present) {
+            gcs->send_text(MAV_SEVERITY_INFO, "MSP Radar %c lost", msg.radar_no + 'A');
+        }
     }
 }
 
@@ -261,9 +282,9 @@ uint8_t AP_MSP::get_next_healthy_peer(uint8_t current_id) const
     return current_id;
 }
 
-bool MSP_RadarPeer::is_healthy() const
+bool MSP_RadarPeer::is_healthy(uint32_t fresh_time) const
 {
-    return last_update_ms > (AP_HAL::millis() - RADAR_PEER_FRESH_TIME_MS) && !location.is_zero();
+    return last_update_ms > (AP_HAL::millis() - fresh_time) && !location.is_zero();
 }
 #endif
 
